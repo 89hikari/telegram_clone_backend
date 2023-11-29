@@ -1,8 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 import { UserDto } from '../users/user.dto';
+import { SEND_VERIFY_EMAIL } from 'src/mailing';
+import { VerifyDTO } from './verification.model';
+
+const bcrypt = require('bcrypt');
 
 @Injectable()
 export class AuthService {
@@ -29,6 +32,28 @@ export class AuthService {
         return result;
     }
 
+    public async verifyUser(verifyData: VerifyDTO) {
+        const user = await this.userService.findOneByEmail(verifyData.email);
+
+        if (user !== null) {
+            if (bcrypt.hashSync(verifyData.vf_code, process.env.VFCODE_SALT) === user.verification_code) {
+                user.verification_code = "";
+                user.is_validated = true;
+                user.save();
+
+                const { password, verification_code, ...result } = user['dataValues'];
+
+                const token = await this.generateToken(result);
+
+                return { user: result, token: token };
+            }
+
+            throw "Invalid code";
+        }
+
+        throw "User not found";
+    }
+
     public async login(user) {
         const token = await this.generateToken(user);
         return { user, token };
@@ -38,17 +63,25 @@ export class AuthService {
         // hash the password
         const pass = await this.hashPassword(user.password);
 
-        // create the user
-        const newUser = await this.userService.create({ ...user, password: pass });
+        const checkIfExist = await this.userService.findOneByEmail(user.email);
 
-        // tslint:disable-next-line: no-string-literal
-        const { password, ...result } = newUser['dataValues'];
+        if (checkIfExist === null) {
+            // create the user
+            const newUser = await this.userService.create({
+                ...user,
+                password: pass,
+                is_validated: false,
+                verification_code: SEND_VERIFY_EMAIL(user.email)
+            });
 
-        // generate token
-        const token = await this.generateToken(result);
+            // tslint:disable-next-line: no-string-literal
+            const { password, verification_code, ...result } = newUser['dataValues'];
 
-        // return the user and the token
-        return { user: result, token };
+            // return the user
+            return result;
+        }
+
+        throw "Already exists";
     }
 
     private async generateToken(user) {

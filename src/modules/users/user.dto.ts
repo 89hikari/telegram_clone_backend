@@ -3,4 +3,6 @@ export class UserDto {
     readonly email: string;
     readonly password: string;
     readonly gender: string;
+    readonly is_validated?: boolean;
+    readonly verification_code?: string;
 }

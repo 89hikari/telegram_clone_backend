@@ -36,4 +36,16 @@ export class User extends Model<User> {
         allowNull: false,
     })
     gender: string;
+
+    @Column({
+        type: DataType.BOOLEAN,
+        allowNull: false,
+    })
+    is_validated: boolean;
+
+    @Column({
+        type: DataType.STRING,
+        allowNull: true,
+    })
+    verification_code: string;
 }
