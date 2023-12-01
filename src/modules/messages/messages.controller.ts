@@ -15,6 +15,12 @@ export class MessagesController {
     }
 
     @UseGuards(AuthGuard('jwt'))
+    @Get()
+    async getLastMessages(@Request() req): Promise<any[]> {
+        return await this.messagesService.findLastMessages(req.user.id);
+    }
+
+    @UseGuards(AuthGuard('jwt'))
     @Post()
     async create(@Body() message: MessageDto, @Request() req): Promise<MessageDto> {
         return await this.messagesService.create(message, req.user.id);
