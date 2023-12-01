@@ -3,6 +3,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { MessagesService } from './messages.service';
 import { Message as MessageEntity } from './message.entity';
 import { MessageDto } from './message.dto';
+import { SubscribeMessage } from '@nestjs/websockets';
 
 @Controller('messages')
 export class MessagesController {
@@ -16,7 +17,7 @@ export class MessagesController {
 
     @UseGuards(AuthGuard('jwt'))
     @Get()
-    async getLastMessages(@Request() req): Promise<any[]> {
+    async getLastMessages(@Request() req): Promise<MessageEntity[]> {
         return await this.messagesService.findLastMessages(req.user.id);
     }
 

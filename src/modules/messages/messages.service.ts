@@ -2,6 +2,7 @@ import { Injectable, Inject } from '@nestjs/common';
 import { Message } from './message.entity';
 import { MessageDto } from './message.dto';
 import { Op, fn, col, literal } from 'sequelize';
+import { User } from '../users/user.entity';
 
 @Injectable()
 export class MessagesService {
@@ -13,11 +14,30 @@ export class MessagesService {
 
     async findMessages(senderId: number, receiverId: number): Promise<Array<Message>> {
         return await this.messageRepository.findAll<Message>({
-            where: { senderId, receiverId },
+            where: { 
+                [Op.or]: [
+                    {
+                        senderId: senderId, 
+                        receiverId: receiverId
+                    },
+                    {
+                        senderId: receiverId, 
+                        receiverId: senderId
+                    }
+                ]
+             },
+            attributes: [
+                'id',
+                'message',
+                'senderId',
+                'receiverId',
+                [fn('TO_CHAR', literal('"Message"."createdAt"'), 'HH24:MI'), 'createdFormatDate']
+            ],
+            order: [['createdAt', 'asc']]
         });
     }
 
-    async findLastMessages(userId: number): Promise<Array<Message>> {
+    async findLastMessages(userId: number): Promise<Array<any>> {
         return await this.messageRepository.findAll<Message>({
             where: {
                 [Op.or]: [
@@ -33,7 +53,35 @@ export class MessagesService {
                     id: {
                         [Op.in]: messages.map(el => el.get("id"))
                     }
-                }
+                },
+                include: [
+                    {
+                        model: User,
+                        as: 'receiver',
+                        on: {
+                            id: [literal('"Message"."receiverId"')]
+                        },
+                        attributes: ["id", "name"],
+                        required: true
+                    },
+                    {
+                        model: User,
+                        as: 'sender',
+                        on: {
+                            id: [literal('"Message"."senderId"')]
+                        },
+                        attributes: ["id", "name"],
+                        required: true
+                    }
+                ],
+                attributes: [
+                    'id',
+                    'message',
+                    'senderId',
+                    'receiverId',
+                    [fn('TO_CHAR', literal('"Message"."createdAt"'), 'DD.MM.YY HH24:MI'), 'createdFormatDate']
+                ],
+                order: [[literal('"Message"."createdAt"'), 'desc']]
             })
         })
     }
