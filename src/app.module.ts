@@ -10,14 +10,13 @@ import { AppGateway } from "./app.socket";
 
 @Module({
     controllers: [AppController],
-    providers: [AppService],
+    providers: [AppService, AppGateway],
     imports: [
         ConfigModule.forRoot({ isGlobal: true }),
         DatabaseModule,
         UsersModule,
         MessagesModule,
-        AuthModule,
-        AppGateway
+        AuthModule
     ]
 })
 export class AppModule { }

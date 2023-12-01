@@ -20,10 +20,8 @@ export class AppGateway
     @WebSocketServer() server: Server;
 
     @SubscribeMessage('sendMessage')
-    async handleSendMessage(payload: MessageDto & { senderId: number }): Promise<void> {
-        this.server.emit(`sidebarMsgs_${[payload.receiverId]}`, payload);
-        this.server.emit(`sidebarMsgs_${payload.senderId}`, payload);
-        this.server.emit(`messages_${[payload.receiverId, payload.senderId].sort((a, b) => a + b).join("_")}`, payload);
+    async handleSendMessage(client: any, payload: MessageDto & { senderId: number }): Promise<void> {
+        this.server.emit(`messages_${[+payload.receiverId, +payload.senderId].sort().join("_")}`, payload);
     }
 
     afterInit(server: Server) {
