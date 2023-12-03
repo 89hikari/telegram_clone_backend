@@ -3,6 +3,7 @@ import { Message } from './message.entity';
 import { MessageDto } from './message.dto';
 import { Op, fn, col, literal } from 'sequelize';
 import { User } from '../users/user.entity';
+import * as _ from 'lodash';
 
 @Injectable()
 export class MessagesService {
@@ -13,19 +14,19 @@ export class MessagesService {
     }
 
     async findMessages(senderId: number, receiverId: number): Promise<Array<Message>> {
-        return await this.messageRepository.findAll<Message>({
-            where: { 
+        return (await this.messageRepository.findAll<Message>({
+            where: {
                 [Op.or]: [
                     {
-                        senderId: senderId, 
+                        senderId: senderId,
                         receiverId: receiverId
                     },
                     {
-                        senderId: receiverId, 
+                        senderId: receiverId,
                         receiverId: senderId
                     }
                 ]
-             },
+            },
             attributes: [
                 'id',
                 'message',
@@ -33,8 +34,9 @@ export class MessagesService {
                 'receiverId',
                 [fn('TO_CHAR', literal('"Message"."createdAt"'), 'HH24:MI'), 'createdFormatDate']
             ],
-            order: [['createdAt', 'asc']]
-        });
+            order: [['createdAt', 'DESC']],
+            limit: 30
+        })).reverse();
     }
 
     async findLastMessages(userId: number): Promise<Array<any>> {
@@ -48,7 +50,7 @@ export class MessagesService {
             attributes: ["senderId", "receiverId", [fn('MAX', col('id')), "id"]],
             group: ["senderId", "receiverId"]
         }).then(async (messages) => {
-            return await this.messageRepository.findAll<Message>({
+            const foundMessages = await this.messageRepository.findAll<Message>({
                 where: {
                     id: {
                         [Op.in]: messages.map(el => el.get("id"))
@@ -77,12 +79,28 @@ export class MessagesService {
                 attributes: [
                     'id',
                     'message',
+                    'createdAt',
                     'senderId',
                     'receiverId',
                     [fn('TO_CHAR', literal('"Message"."createdAt"'), 'DD.MM.YY HH24:MI'), 'createdFormatDate']
                 ],
                 order: [[literal('"Message"."createdAt"'), 'desc']]
-            })
+            });
+
+            const doubleIndexes = [
+                ...new Set(
+                    foundMessages.map((msg, i) => {
+                        const double = foundMessages.findIndex(_ => _.senderId === msg.receiverId && _.receiverId === msg.senderId)
+                        if (double === -1)
+                            return -1;
+                        else
+                            if (foundMessages[i].id > foundMessages[double].id) return foundMessages[i].id;
+                            else return foundMessages[double].id;
+                    }).filter(el => el !== -1)
+                )
+            ];
+
+            return foundMessages.filter(el => doubleIndexes.indexOf(el.id) !== -1);
         })
     }
 }

@@ -1,6 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { User } from './user.entity';
 import { UserDto } from './user.dto';
+import { Op } from 'sequelize';
 
 @Injectable()
 export class UsersService {
@@ -9,6 +10,26 @@ export class UsersService {
 
     async create(user: UserDto): Promise<User> {
         return await this.userRepository.create<User>(user);
+    }
+
+    async findList(limit: number, search: string, userId: number) {
+        return await this.userRepository.findAll<User>({
+            where: {
+                [Op.or]: [
+                    { name: { [Op.like]: `%${search || ''}%` } },
+                    { email: { [Op.like]: `%${search || ''}%` } },
+                ],
+                [Op.not]: {
+                    id: userId
+                }
+            },
+            limit: limit || 5,
+            attributes: [
+                "id",
+                "name",
+                "email"
+            ]
+        });
     }
 
     async findOneByEmail(email: string): Promise<User> {
