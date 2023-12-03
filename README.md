@@ -12,4 +12,5 @@ DB_NAME_DEVELOPMENT=your_dev_db_name\
 DB_NAME_PRODUCTION=your_prod_db_name\
 JWTKEY=random_secret_key\
 TOKEN_EXPIRATION=24h\
-BEARER=Bearer
+BEARER=Bearer\
+RESEND_API_KEY=api_key - This is api key for resend (check resend.com)
