@@ -3,7 +3,6 @@ import { Message } from './message.entity';
 import { MessageDto } from './message.dto';
 import { Op, fn, col, literal } from 'sequelize';
 import { User } from '../users/user.entity';
-import * as _ from 'lodash';
 
 @Injectable()
 export class MessagesService {
