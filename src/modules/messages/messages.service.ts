@@ -93,13 +93,13 @@ export class MessagesService {
                         if (double === -1)
                             return -1;
                         else
-                            if (foundMessages[i].id > foundMessages[double].id) return foundMessages[i].id;
+                            if (foundMessages[i].id < foundMessages[double].id) return foundMessages[i].id;
                             else return foundMessages[double].id;
                     }).filter(el => el !== -1)
                 )
             ];
 
-            return foundMessages.filter(el => doubleIndexes.indexOf(el.id) !== -1);
+            return foundMessages.filter(el => doubleIndexes.indexOf(el.id) === -1);
         })
     }
 }
