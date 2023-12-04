@@ -22,6 +22,8 @@ export class AppGateway
     @SubscribeMessage('sendMessage')
     async handleSendMessage(client: any, payload: MessageDto & { senderId: number }): Promise<void> {
         this.server.emit(`messages_${[+payload.receiverId, +payload.senderId].sort().join("_")}`, payload);
+        this.server.emit(`new_messages_${payload.receiverId}`, payload);
+        this.server.emit(`new_messages_${payload.senderId}`, payload);
     }
 
     afterInit(server: Server) {
