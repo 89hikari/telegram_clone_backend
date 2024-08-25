@@ -1,101 +1,100 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UsersService } from '../users/users.service';
-import { UserDto } from '../users/user.dto';
 import { SEND_VERIFY_EMAIL } from 'src/mailing';
+import { UserDto } from '../users/user.dto';
+import { UsersService } from '../users/users.service';
 import { VerifyDTO } from './verification.model';
 
 const bcrypt = require('bcrypt');
 
 @Injectable()
 export class AuthService {
-    constructor(
-        private readonly userService: UsersService,
-        private readonly jwtService: JwtService,
-    ) { }
+  constructor(
+    private readonly userService: UsersService,
+    private readonly jwtService: JwtService,
+  ) {}
 
-    async validateUser(email: string, pass: string) {
-        // find if user exist with this email
-        const user = await this.userService.findOneByEmail(email);
-        if (!user) {
-            return null;
-        }
-
-        // find if user password match
-        const match = await this.comparePassword(pass, user.password);
-        if (!match) {
-            return null;
-        }
-
-        // tslint:disable-next-line: no-string-literal
-        const { password, ...result } = user['dataValues'];
-        return result;
+  async validateUser(email: string, pass: string) {
+    // find if user exist with this email
+    const user = await this.userService.findOneByEmail(email);
+    if (!user) {
+      return null;
     }
 
-    public async verifyUser(verifyData: VerifyDTO) {
-        const user = await this.userService.findOneByEmail(verifyData.email);
-
-        if (user !== null) {
-            if (bcrypt.hashSync(verifyData.vf_code, process.env.VFCODE_SALT) === user.verification_code) {
-                user.verification_code = "";
-                user.is_validated = true;
-                user.save();
-
-                const { password, verification_code, ...result } = user['dataValues'];
-
-                const token = await this.generateToken(result);
-
-                return { user: result, token: token };
-            }
-
-            throw "Invalid code";
-        }
-
-        throw "User not found";
+    // find if user password match
+    const match = await this.comparePassword(pass, user.password);
+    if (!match) {
+      return null;
     }
 
-    public async login(user) {
-        const token = await this.generateToken(user);
-        return { user, token };
+    // tslint:disable-next-line: no-string-literal
+    const { password, ...result } = user['dataValues'];
+    return result;
+  }
+
+  public async verifyUser(verifyData: VerifyDTO) {
+    const user = await this.userService.findOneByEmail(verifyData.email);
+
+    if (user !== null) {
+      if (bcrypt.hashSync(verifyData.vf_code, process.env.VFCODE_SALT) === user.verification_code) {
+        user.verification_code = '';
+        user.is_validated = true;
+        user.save();
+
+        const { password, verification_code, ...result } = user['dataValues'];
+
+        const token = await this.generateToken(result);
+
+        return { user: result, token: token };
+      }
+
+      throw 'Invalid code';
     }
 
-    public async create(user: UserDto) {
-        // hash the password
-        const pass = await this.hashPassword(user.password);
+    throw 'User not found';
+  }
 
-        const checkIfExist = await this.userService.findOneByEmail(user.email);
+  public async login(user) {
+    const token = await this.generateToken(user);
+    return { user, token };
+  }
 
-        if (checkIfExist === null) {
-            // create the user
-            const newUser = await this.userService.create({
-                ...user,
-                password: pass,
-                is_validated: false,
-                verification_code: SEND_VERIFY_EMAIL(user.email)
-            });
+  public async create(user: UserDto) {
+    // hash the password
+    const pass = await this.hashPassword(user.password);
 
-            // tslint:disable-next-line: no-string-literal
-            const { password, verification_code, ...result } = newUser['dataValues'];
+    const checkIfExist = await this.userService.findOneByEmail(user.email);
 
-            // return the user
-            return result;
-        }
+    if (checkIfExist === null) {
+      // create the user
+      const newUser = await this.userService.create({
+        ...user,
+        password: pass,
+        is_validated: false,
+        verification_code: SEND_VERIFY_EMAIL(user.email),
+      });
 
-        throw "Already exists";
+      const { password, verification_code, ...result } = newUser['dataValues'];
+
+      // return the user
+      return result;
     }
 
-    private async generateToken(user) {
-        const token = await this.jwtService.signAsync(user);
-        return token;
-    }
+    throw 'Already exists';
+  }
 
-    private async hashPassword(password: string | Buffer) {
-        const hash = await bcrypt.hash(password, 10);
-        return hash;
-    }
+  private async generateToken(user) {
+    const token = await this.jwtService.signAsync(user);
+    return token;
+  }
 
-    private async comparePassword(enteredPassword: string | Buffer, dbPassword: string) {
-        const match = await bcrypt.compare(enteredPassword, dbPassword);
-        return match;
-    }
+  private async hashPassword(password: string | Buffer) {
+    const hash = await bcrypt.hash(password, 10);
+    return hash;
+  }
+
+  private async comparePassword(enteredPassword: string | Buffer, dbPassword: string) {
+    const match = await bcrypt.compare(enteredPassword, dbPassword);
+    return match;
+  }
 }

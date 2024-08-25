@@ -1,26 +1,26 @@
-import { Controller, Body, Post, UseGuards, Request } from '@nestjs/common';
+import { Body, Controller, Post, Request, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { AuthService } from './auth.service';
 import { UserDto } from '../users/user.dto';
+import { AuthService } from './auth.service';
 import { VerifyDTO } from './verification.model';
 
 @Controller('auth')
 export class AuthController {
-    constructor(private authService: AuthService) { }
+  constructor(private authService: AuthService) {}
 
-    @UseGuards(AuthGuard('local'))
-    @Post('login')
-    async login(@Request() req) {
-        return await this.authService.login(req.user);
-    }
+  @UseGuards(AuthGuard('local'))
+  @Post('login')
+  async login(@Request() req) {
+    return await this.authService.login(req.user);
+  }
 
-    @Post('signup')
-    async signUp(@Body() user: UserDto) {
-        return await this.authService.create(user);
-    }
+  @Post('signup')
+  async signUp(@Body() user: UserDto) {
+    return await this.authService.create(user);
+  }
 
-    @Post('verify')
-    async verify(@Body() verifyData: VerifyDTO) {
-        return await this.authService.verifyUser(verifyData);
-    }
+  @Post('verify')
+  async verify(@Body() verifyData: VerifyDTO) {
+    return await this.authService.verifyUser(verifyData);
+  }
 }

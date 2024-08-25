@@ -1,31 +1,31 @@
-import { Table, Column, Model, DataType, ForeignKey, BelongsTo, PrimaryKey } from 'sequelize-typescript';
+import { BelongsTo, Column, DataType, ForeignKey, Model, Table } from 'sequelize-typescript';
 import { User } from '../users/user.entity';
 
 @Table
 export class Message extends Model<Message> {
-    @Column({
-        type: DataType.STRING,
-        allowNull: false,
-    })
-    message: string;
+  @Column({
+    type: DataType.STRING,
+    allowNull: false,
+  })
+  message: string;
 
-    @ForeignKey(() => User)
-    @Column({
-        type: DataType.INTEGER,
-        allowNull: false,
-    })
-    senderId: number;
+  @ForeignKey(() => User)
+  @Column({
+    type: DataType.INTEGER,
+    allowNull: false,
+  })
+  senderId: number;
 
-    @BelongsTo(() => User)
-    sender: User;
+  @BelongsTo(() => User)
+  sender: User;
 
-    @ForeignKey(() => User)
-    @Column({
-        type: DataType.INTEGER,
-        allowNull: false,
-    })
-    receiverId: number;
+  @ForeignKey(() => User)
+  @Column({
+    type: DataType.INTEGER,
+    allowNull: false,
+  })
+  receiverId: number;
 
-    @BelongsTo(() => User)
-    receiver: User;
+  @BelongsTo(() => User)
+  receiver: User;
 }
