@@ -7,7 +7,6 @@ import { MessagesModule } from './modules/messages/messages.module';
 import { UsersModule } from './modules/users/users.module';
 
 @Module({
-  controllers: [],
   providers: [AppGateway],
   imports: [ConfigModule.forRoot({ isGlobal: true }), DatabaseModule, UsersModule, MessagesModule, AuthModule],
 })

@@ -14,7 +14,9 @@ export class UsersService {
   async findList(limit: number, search: string, userId: number) {
     return await this.userRepository.findAll<User>({
       where: {
-        [Op.or]: [{ name: { [Op.like]: `%${search || ''}%` } }, { email: { [Op.like]: `%${search || ''}%` } }],
+        name: {
+          [Op.like]: `%${search || ''}%`,
+        },
         [Op.not]: {
           id: userId,
         },
@@ -26,6 +28,12 @@ export class UsersService {
 
   async findOneByEmail(email: string): Promise<User> {
     return await this.userRepository.findOne<User>({ where: { email } });
+  }
+
+  async findOneByEmailOrName(emailOrName: string): Promise<User> {
+    return await this.userRepository.findOne<User>({
+      where: { [Op.or]: [{ name: emailOrName }, { email: emailOrName }] },
+    });
   }
 
   async findOneById(id: number): Promise<User> {

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { SEND_VERIFY_EMAIL } from 'src/mailing';
+import { sendVerifyEmail } from 'src/mailing';
 import { UserDto } from '../users/user.dto';
 import { UsersService } from '../users/users.service';
 import { VerifyDTO } from './verification.model';
@@ -14,9 +14,9 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async validateUser(email: string, pass: string) {
-    // find if user exist with this email
-    const user = await this.userService.findOneByEmail(email);
+  async validateUser(name: string, pass: string) {
+    // find if user exist with this name or email
+    const user = await this.userService.findOneByEmailOrName(name);
     if (!user) {
       return null;
     }
@@ -27,7 +27,6 @@ export class AuthService {
       return null;
     }
 
-    // tslint:disable-next-line: no-string-literal
     const { password, ...result } = user['dataValues'];
     return result;
   }
@@ -36,7 +35,7 @@ export class AuthService {
     const user = await this.userService.findOneByEmail(verifyData.email);
 
     if (user !== null) {
-      if (bcrypt.hashSync(verifyData.vf_code, process.env.VFCODE_SALT) === user.verification_code) {
+      if (verifyData.vf_code === user.verification_code) {
         user.verification_code = '';
         user.is_validated = true;
         user.save();
@@ -71,7 +70,7 @@ export class AuthService {
         ...user,
         password: pass,
         is_validated: false,
-        verification_code: SEND_VERIFY_EMAIL(user.email),
+        verification_code: sendVerifyEmail(user.email),
       });
 
       const { password, verification_code, ...result } = newUser['dataValues'];
