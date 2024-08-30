@@ -1,11 +1,11 @@
-import { Injectable } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { sendVerifyEmail } from 'src/mailing';
-import { UserDto } from '../users/user.dto';
-import { UsersService } from '../users/users.service';
-import { VerifyDTO } from './verification.model';
+import { ConflictException, Injectable } from "@nestjs/common";
+import { JwtService } from "@nestjs/jwt";
+import { sendVerifyEmail } from "src/mailing";
+import { UserDto } from "../users/user.dto";
+import { UsersService } from "../users/users.service";
+import { VerifyDTO } from "./verification.model";
 
-const bcrypt = require('bcrypt');
+const bcrypt = require("bcrypt");
 
 @Injectable()
 export class AuthService {
@@ -27,7 +27,7 @@ export class AuthService {
       return null;
     }
 
-    const { password, ...result } = user['dataValues'];
+    const { password, ...result } = user["dataValues"];
     return result;
   }
 
@@ -36,21 +36,26 @@ export class AuthService {
 
     if (user !== null) {
       if (verifyData.vf_code === user.verification_code) {
-        user.verification_code = '';
+        user.verification_code = "";
         user.is_validated = true;
         user.save();
 
-        const { password, verification_code, ...result } = user['dataValues'];
+        const { password, verification_code, ...result } = user["dataValues"];
 
         const token = await this.generateToken(result);
 
         return { user: result, token: token };
       }
 
-      throw 'Invalid code';
+      throw "Invalid code";
     }
 
-    throw 'User not found';
+    throw "User not found";
+  }
+
+  public async checkVerification(name: string) {
+    const user = await this.userService.findOneByEmailOrName(name);
+    return user?.is_validated;
   }
 
   public async login(user) {
@@ -62,7 +67,7 @@ export class AuthService {
     // hash the password
     const pass = await this.hashPassword(user.password);
 
-    const checkIfExist = await this.userService.findOneByEmail(user.email);
+    const checkIfExist = await this.userService.findOneByEmailOrName(user.email) || await this.userService.findOneByEmailOrName(user.name);
 
     if (checkIfExist === null) {
       // create the user
@@ -73,13 +78,13 @@ export class AuthService {
         verification_code: sendVerifyEmail(user.email),
       });
 
-      const { password, verification_code, ...result } = newUser['dataValues'];
+      const { password, verification_code, ...result } = newUser["dataValues"];
 
       // return the user
       return result;
     }
 
-    throw 'Already exists';
+    throw new ConflictException('Already exists');
   }
 
   private async generateToken(user) {

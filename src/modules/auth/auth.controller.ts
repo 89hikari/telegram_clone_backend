@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, Request, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { UserDto } from '../users/user.dto';
 import { AuthService } from './auth.service';
@@ -22,5 +22,10 @@ export class AuthController {
   @Post('verify')
   async verify(@Body() verifyData: VerifyDTO) {
     return await this.authService.verifyUser(verifyData);
+  }
+
+  @Get('check-verification')
+  async checkVerification(@Query('name') name: string) {
+    return await this.authService.checkVerification(name);
   }
 }
