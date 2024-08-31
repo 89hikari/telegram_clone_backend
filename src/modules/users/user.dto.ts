@@ -6,3 +6,5 @@ export class UserDto {
   readonly is_validated?: boolean;
   readonly verification_code?: string;
 }
+
+export type UserInsensitiveDTO = Omit<UserDto, "password" | "verification_code" | "is_validated">;
