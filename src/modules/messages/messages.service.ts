@@ -19,6 +19,15 @@ interface ILastMessages {
   receiver: SenderOrReceiverPerson;
 }
 
+interface IMessages {
+  id: number;
+  message: string;
+  senderId: number;
+  receiverId: number;
+  date: string;
+  time: string;
+}
+
 @Injectable()
 export class MessagesService {
   constructor(
@@ -33,32 +42,44 @@ export class MessagesService {
     });
   }
 
-  async findMessages(senderId: number, receiverId: number): Promise<Array<Message>> {
-    return (
-      await this.messageRepository.findAll<Message>({
-        where: {
-          [Op.or]: [
-            {
-              senderId: senderId,
-              receiverId: receiverId,
-            },
-            {
-              senderId: receiverId,
-              receiverId: senderId,
-            },
+  async findMessages(senderId: number, receiverId: number): Promise<Array<any>> {
+    const queryResult =
+      ((
+        await this.messageRepository.findAll<Message>({
+          where: {
+            [Op.or]: [
+              {
+                senderId: senderId,
+                receiverId: receiverId,
+              },
+              {
+                senderId: receiverId,
+                receiverId: senderId,
+              },
+            ],
+          },
+          attributes: [
+            "id",
+            "message",
+            "senderId",
+            "receiverId",
+            [fn("TO_CHAR", literal('"Message"."createdAt"'), "DD.MM.YYYY"), "date"],
+            [fn("TO_CHAR", literal('"Message"."createdAt"'), "HH24:MI"), "time"],
           ],
-        },
-        attributes: [
-          "id",
-          "message",
-          "senderId",
-          "receiverId",
-          [fn("TO_CHAR", literal('"Message"."createdAt"'), "HH24:MI"), "createdFormatDate"],
-        ],
-        order: [["createdAt", "DESC"]],
-        limit: 30,
-      })
-    ).reverse();
+          order: [["createdAt", "DESC"]],
+          limit: 30,
+        })
+      )
+        .reverse()
+        .map(({ dataValues }) => dataValues) as unknown[] as IMessages[]) || [];
+
+    return queryResult.map((el) => {
+      const isMe = senderId === el.senderId;
+      return {
+        ...el,
+        isMe: isMe,
+      };
+    });
   }
 
   async findLastMessages(userId: number): Promise<Array<any>> {
