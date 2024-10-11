@@ -42,6 +42,22 @@ export class MessagesService {
     });
   }
 
+  async getPeersWithConversations(userId: number): Promise<Array<any>> {
+    return await this.messageRepository.findAll<Message>({
+      where: {
+        [Op.or]: [
+          {
+            receiverId: userId,
+          },
+          {
+            senderId: userId,
+          },
+        ],
+      },
+      attributes: ["receiverId", "senderId"],
+    });
+  }
+
   async findMessages(senderId: number, receiverId: number): Promise<Array<any>> {
     const queryResult =
       ((
