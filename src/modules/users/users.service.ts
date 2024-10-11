@@ -1,11 +1,11 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { Op } from 'sequelize';
-import { UserDto } from './user.dto';
-import { User } from './user.entity';
+import { Inject, Injectable } from "@nestjs/common";
+import { Op } from "sequelize";
+import { UserDto } from "./user.dto";
+import { User } from "./user.entity";
 
 @Injectable()
 export class UsersService {
-  constructor(@Inject('USER_REPOSITORY') private readonly userRepository: typeof User) {}
+  constructor(@Inject("USER_REPOSITORY") private readonly userRepository: typeof User) {}
 
   async create(user: UserDto): Promise<User> {
     return await this.userRepository.create<User>(user);
@@ -15,14 +15,14 @@ export class UsersService {
     return await this.userRepository.findAll<User>({
       where: {
         name: {
-          [Op.like]: `%${search || ''}%`,
+          [Op.like]: `%${search || ""}%`,
         },
         [Op.not]: {
           id: userId,
         },
       },
       limit: limit || 5,
-      attributes: ['id', 'name', 'email'],
+      attributes: ["id", "name", "email"],
     });
   }
 
@@ -39,9 +39,9 @@ export class UsersService {
   async findOneById(id: number): Promise<User> {
     return await this.userRepository.findOne<User>({
       where: {
-        id: id,
+        id,
       },
-      attributes: ['id', 'name', 'email'],
+      attributes: ["id", "name", "email", "gender", "createdAt"],
     });
   }
 }

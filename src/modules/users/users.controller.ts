@@ -8,8 +8,8 @@ export class UsersController {
 
   @Get('/:id')
   @UseGuards(AuthGuard('jwt'))
-  getUser(@Param('id') id) {
-    return this.userService.findOneById(id);
+  getUser(@Param('id') id: string | number, @Request() req) {
+    return this.userService.findOneById(id === "self" ? req.user.id : id);
   }
 
   @Get('')
