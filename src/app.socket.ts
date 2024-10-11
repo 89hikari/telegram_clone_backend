@@ -27,6 +27,7 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
   }
 
   private async getConnentedPeers(curUserID: number) {
+    if (!curUserID) return;
     const connectedUsers = Array.from(this.server.sockets.sockets.values()).map((el) => ({
       connectionId: el.id,
       userId: el.data?.userId,
@@ -48,8 +49,11 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
   async initUser(client: Socket, payload: any): Promise<void> {
     client.data["userId"] = payload.userId;
     const connectedPeers = await this.getConnentedPeers(payload.userId);
-    connectedPeers.map((connectionData) => {
-      this.server.sockets.sockets.get(connectionData.connectionId).emit("newUserConnected", payload.userId);
+    connectedPeers?.map((connectionData) => {
+      this.server.sockets.sockets.get(connectionData.connectionId)?.emit("newUserConnected", {
+        connectionId: client.id,
+        userId: payload.userId,
+      });
     });
     client.emit("connectedPeers", connectedPeers);
   }
@@ -61,8 +65,11 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
   async handleDisconnect(client: Socket) {
     const userId = client.data?.userId;
     const connectedPeers = await this.getConnentedPeers(userId);
-    connectedPeers.map((connectionData) => {
-      this.server.sockets.sockets.get(connectionData.connectionId).emit("userDisconnected", userId);
+    connectedPeers?.map((connectionData) => {
+      this.server.sockets.sockets.get(connectionData.connectionId)?.emit("userDisconnected", {
+        connectionId: client.id,
+        userId: userId,
+      });
     });
     client.data = {};
     console.log(`Disconnected: ${client.id}`);
