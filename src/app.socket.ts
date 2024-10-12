@@ -7,8 +7,10 @@ import {
   WebSocketServer,
 } from "@nestjs/websockets";
 import { Server, Socket } from "socket.io";
+import { v4 as uuidv4 } from 'uuid';
 import { MessageDto } from "./modules/messages/message.dto";
 import { MessagesService } from "./modules/messages/messages.service";
+import { UsersService } from "./modules/users/users.service";
 
 @WebSocketGateway({
   cors: {
@@ -16,14 +18,34 @@ import { MessagesService } from "./modules/messages/messages.service";
   },
 })
 export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
-  constructor(private readonly messagesService: MessagesService) {}
+  constructor(
+    private readonly messagesService: MessagesService,
+    private readonly userService: UsersService,
+  ) {}
   @WebSocketServer() server: Server;
 
   @SubscribeMessage("sendMessage")
-  async handleSendMessage(client: any, payload: MessageDto & { senderId: number }): Promise<void> {
-    this.server.emit(`messages_${[+payload.receiverId, +payload.senderId].sort().join("_")}`, payload);
-    this.server.emit(`new_messages_${payload.receiverId}`, payload);
-    this.server.emit(`new_messages_${payload.senderId}`, payload);
+  async handleSendMessage(client: Socket, payload: MessageDto): Promise<void> {
+    const curDate = new Date();
+    const messageId = uuidv4();
+    const receiverId = payload.receiverId;
+    const peer = Array.from(this.server.sockets.sockets.values()).find((el) => el.data?.userId === receiverId);
+    const curUserID = client.data?.userId;
+    const senderInfo = await this.userService.findOneById(curUserID);
+    client.emit("newMessage", {
+      messageId: messageId,
+      self: true,
+      date: curDate,
+      senderInfo,
+      ...payload,
+    });
+    peer?.emit("newMessage", {
+      messageId: messageId,
+      self: false,
+      date: curDate,
+      senderInfo,
+      ...payload,
+    });
   }
 
   private async getConnentedPeers(curUserID: number) {
@@ -46,7 +68,7 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
   }
 
   @SubscribeMessage("initUser")
-  async initUser(client: Socket, payload: any): Promise<void> {
+  async initUser(client: Socket, payload: { userId: number }): Promise<void> {
     client.data["userId"] = payload.userId;
     const connectedPeers = await this.getConnentedPeers(payload.userId);
     connectedPeers?.map((connectionData) => {
