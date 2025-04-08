@@ -85,9 +85,7 @@ export class MessagesService {
           order: [["createdAt", "DESC"]],
           limit: 30,
         })
-      )
-        .reverse()
-        .map(({ dataValues }) => dataValues) as unknown[] as IMessages[]) || [];
+      ).map(({ dataValues }) => dataValues) as unknown[] as IMessages[]) || [];
 
     return queryResult.map((el) => {
       const isMe = senderId === el.senderId;
