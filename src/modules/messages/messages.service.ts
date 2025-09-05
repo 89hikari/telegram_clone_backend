@@ -11,7 +11,7 @@ type SenderOrReceiverPerson = {
 
 interface ILastMessages {
   id: number;
-  createdFormatDate: string;
+  createdAt: string;
   message: string;
   receiverId: number;
   senderId: string;
@@ -74,15 +74,8 @@ export class MessagesService {
               },
             ],
           },
-          attributes: [
-            "id",
-            "message",
-            "senderId",
-            "receiverId",
-            [fn("TO_CHAR", literal('"Message"."createdAt"'), "DD.MM.YYYY"), "date"],
-            [fn("TO_CHAR", literal('"Message"."createdAt"'), "HH24:MI"), "time"],
-          ],
-          order: [["createdAt", "DESC"]],
+          attributes: ["id", "message", "senderId", "receiverId", "createdAt"],
+          order: [["createdAt", "asc"]],
           limit: 30,
         })
       ).map(({ dataValues }) => dataValues) as unknown[] as IMessages[]) || [];
@@ -134,14 +127,7 @@ export class MessagesService {
                   required: true,
                 },
               ],
-              attributes: [
-                "id",
-                "message",
-                "createdAt",
-                "senderId",
-                "receiverId",
-                [fn("TO_CHAR", literal('"Message"."createdAt"'), "DD.MM.YY HH24:MI"), "createdFormatDate"],
-              ],
+              attributes: ["id", "message", "createdAt", "senderId", "receiverId", "createdAt"],
               order: [[literal('"Message"."createdAt"'), "desc"]],
             });
 
@@ -169,7 +155,7 @@ export class MessagesService {
       const isMe = userId === el.receiver.id;
       return {
         id: el.id,
-        date: el.createdFormatDate,
+        date: el.createdAt,
         message: el.message,
         personId: isMe ? el.sender.id : el.receiver.id,
         personName: isMe ? el.sender.name : el.receiver.name,
