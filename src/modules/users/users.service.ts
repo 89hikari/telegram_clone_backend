@@ -11,8 +11,8 @@ export class UsersService {
     return await this.userRepository.create<User>(user);
   }
 
-  async setLastSeen(id: number): Promise<void> {
-    await this.userRepository.update<User>(
+  async setLastSeen(id?: number): Promise<void> {
+    id && await this.userRepository.update<User>(
       {
         lastSeenAt: new Date(),
       },
