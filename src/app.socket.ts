@@ -7,7 +7,7 @@ import {
   WebSocketServer,
 } from "@nestjs/websockets";
 import { Server, Socket } from "socket.io";
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 import { MessageDto } from "./modules/messages/message.dto";
 import { MessagesService } from "./modules/messages/messages.service";
 import { UsersService } from "./modules/users/users.service";
@@ -26,26 +26,18 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 
   @SubscribeMessage("sendMessage")
   async handleSendMessage(client: Socket, payload: MessageDto): Promise<void> {
-    const curDate = new Date();
-    const messageId = uuidv4();
-    const receiverId = payload.receiverId;
-    const peer = Array.from(this.server.sockets.sockets.values()).find((el) => el.data?.userId === receiverId);
-    const curUserID = client.data?.userId;
-    const senderInfo = await this.userService.findOneById(curUserID);
-    client.emit("newMessage", {
-      messageId: messageId,
+    const peer = Array.from(this.server.sockets.sockets.values()).find((el) => el.data?.userId === payload.receiverId);
+    const senderInfo = await this.userService.findOneById(client.data?.userId);
+    const newMessage = {
+      messageId: uuidv4(),
       self: true,
-      date: curDate,
+      date: new Date(),
       senderInfo,
       ...payload,
-    });
-    peer?.emit("newMessage", {
-      messageId: messageId,
-      self: false,
-      date: curDate,
-      senderInfo,
-      ...payload,
-    });
+    };
+    client.emit("newMessage", newMessage);
+    newMessage.self = false;
+    peer?.emit("newMessage", newMessage);
   }
 
   private async getConnentedPeers(curUserID: number) {
@@ -94,6 +86,7 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
       });
     });
     client.data = {};
+    await this.userService.setLastSeen(userId);
     console.log(`Disconnected: ${client.id}`);
   }
 

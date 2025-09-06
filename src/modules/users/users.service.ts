@@ -1,5 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { Op } from "sequelize";
+import { literal, Op } from "sequelize";
 import { UserDto } from "./user.dto";
 import { User } from "./user.entity";
 
@@ -9,6 +9,19 @@ export class UsersService {
 
   async create(user: UserDto): Promise<User> {
     return await this.userRepository.create<User>(user);
+  }
+
+  async setLastSeen(id: number): Promise<void> {
+    await this.userRepository.update<User>(
+      {
+        lastSeenAt: new Date(),
+      },
+      {
+        where: {
+          id,
+        },
+      },
+    );
   }
 
   async findList(limit: number, search: string, userId: number) {
@@ -41,7 +54,35 @@ export class UsersService {
       where: {
         id,
       },
-      attributes: ["id", "name", "email", "gender", "createdAt"],
+      attributes: [
+        "id",
+        "name",
+        "email",
+        "gender",
+        "createdAt",
+        "lastSeenAt",
+        [literal("avatar IS NOT NULL"), "hasAvatar"],
+      ],
     });
+  }
+
+  async updateAvatar(id: number, file: Express.Multer.File) {
+    await this.userRepository.update<User>(
+      { avatar: file.buffer },
+      {
+        where: {
+          id,
+        },
+      },
+    );
+  }
+
+  async getAvatar(id: number): Promise<Buffer | null> {
+    const user = await this.userRepository.findOne({
+      where: { id },
+      attributes: ["avatar"],
+    });
+
+    return user?.avatar ?? null;
   }
 }

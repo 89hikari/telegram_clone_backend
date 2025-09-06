@@ -26,7 +26,7 @@ export class AuthService {
     const match = await this.comparePassword(pass, user.password);
     if (!match) return null;
 
-    const { password, ...result } = user["dataValues"];
+    const { password, avatar, ...result } = user["dataValues"];
     return result;
   }
 

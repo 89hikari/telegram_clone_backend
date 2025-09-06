@@ -7,6 +7,7 @@ import { Message } from "./message.entity";
 type SenderOrReceiverPerson = {
   id: number;
   name: string;
+  avatar?: string;
 };
 
 interface ILastMessages {
@@ -114,7 +115,7 @@ export class MessagesService {
                   on: {
                     id: [literal('"Message"."receiverId"')],
                   },
-                  attributes: ["id", "name"],
+                  attributes: ["id", "name", "avatar"],
                   required: true,
                 },
                 {
@@ -123,7 +124,7 @@ export class MessagesService {
                   on: {
                     id: [literal('"Message"."senderId"')],
                   },
-                  attributes: ["id", "name"],
+                  attributes: ["id", "name", "avatar"],
                   required: true,
                 },
               ],
@@ -159,6 +160,7 @@ export class MessagesService {
         message: el.message,
         personId: isMe ? el.sender.id : el.receiver.id,
         personName: isMe ? el.sender.name : el.receiver.name,
+        hasAvatar: isMe ? !!el.sender.avatar : !!el.receiver.avatar,
       };
     });
   }

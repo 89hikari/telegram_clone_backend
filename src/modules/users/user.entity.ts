@@ -1,4 +1,4 @@
-import { Column, DataType, Model, Table } from 'sequelize-typescript';
+import { Column, DataType, Model, Table } from "sequelize-typescript";
 
 @Table
 export class User extends Model<User> {
@@ -31,7 +31,7 @@ export class User extends Model<User> {
 
   @Column({
     type: DataType.ENUM,
-    values: ['male', 'female'],
+    values: ["male", "female"],
     allowNull: false,
   })
   gender: string;
@@ -47,4 +47,13 @@ export class User extends Model<User> {
     allowNull: true,
   })
   verification_code: string;
+
+  @Column({
+    type: DataType.DATE,
+    allowNull: true,
+  })
+  lastSeenAt: Date;
+
+  @Column({ type: "bytea", allowNull: true })
+  avatar: Buffer | null;
 }
