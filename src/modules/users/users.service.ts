@@ -12,16 +12,17 @@ export class UsersService {
   }
 
   async setLastSeen(id?: number): Promise<void> {
-    id && await this.userRepository.update<User>(
-      {
-        lastSeenAt: new Date(),
-      },
-      {
-        where: {
-          id,
+    id &&
+      (await this.userRepository.update<User>(
+        {
+          lastSeenAt: new Date(),
         },
-      },
-    );
+        {
+          where: {
+            id,
+          },
+        },
+      ));
   }
 
   async findList(limit: number, search: string, userId: number) {

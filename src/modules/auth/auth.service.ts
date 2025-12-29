@@ -1,11 +1,10 @@
 import { ConflictException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
+import * as bcrypt from "bcrypt";
 import { sendVerifyEmail } from "src/mailing";
 import { UserDto, UserInsensitiveDTO } from "../users/user.dto";
 import { UsersService } from "../users/users.service";
 import { VerifyDTO } from "./verification.model";
-
-const bcrypt = require("bcrypt");
 
 @Injectable()
 export class AuthService {
@@ -14,9 +13,13 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  private getInsensitiveUserData(user: UserDto) {
-    const { password, verification_code, is_validated, ...result } = user;
-    return result;
+  private getInsensitiveUserData(user: unknown): UserInsensitiveDTO {
+    const u = user as UserDto;
+    const result = { ...u } as Record<string, unknown>;
+    delete result.password;
+    delete result.verification_code;
+    delete result.is_validated;
+    return result as UserInsensitiveDTO;
   }
 
   public async validateUser(name: string, pass: string) {
@@ -26,8 +29,11 @@ export class AuthService {
     const match = await this.comparePassword(pass, user.password);
     if (!match) return null;
 
-    const { password, avatar, ...result } = user["dataValues"];
-    return result;
+    const data = user["dataValues"] as unknown as UserDto;
+    const result = { ...data } as Record<string, unknown>;
+    delete result.password;
+    delete result.avatar;
+    return result as UserInsensitiveDTO;
   }
 
   public async verifyUser(verifyData: VerifyDTO) {

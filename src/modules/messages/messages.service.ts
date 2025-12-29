@@ -4,13 +4,13 @@ import { User } from "../users/user.entity";
 import { MessageDto } from "./message.dto";
 import { Message } from "./message.entity";
 
-type SenderOrReceiverPerson = {
+export type SenderOrReceiverPerson = {
   id: number;
   name: string;
   avatar?: string;
 };
 
-interface ILastMessages {
+export interface ILastMessages {
   id: number;
   createdAt: string;
   message: string;
@@ -20,7 +20,7 @@ interface ILastMessages {
   receiver: SenderOrReceiverPerson;
 }
 
-interface IMessages {
+export interface IMessages {
   id: number;
   message: string;
   senderId: number;
@@ -28,6 +28,21 @@ interface IMessages {
   date: string;
   time: string;
 }
+
+export type PeerPair = {
+  senderId: number;
+  receiverId: number;
+};
+
+export type MessageResponse = IMessages & { isMe: boolean };
+export type LastMessageResponse = {
+  id: number;
+  date: string;
+  message: string;
+  personId: number;
+  personName: string;
+  hasAvatar: boolean;
+};
 
 @Injectable()
 export class MessagesService {
@@ -43,8 +58,8 @@ export class MessagesService {
     });
   }
 
-  async getPeersWithConversations(userId: number): Promise<Array<any>> {
-    return await this.messageRepository.findAll<Message>({
+  async getPeersWithConversations(userId: number): Promise<PeerPair[]> {
+    const rows = await this.messageRepository.findAll<Message>({
       where: {
         [Op.or]: [
           {
@@ -57,9 +72,15 @@ export class MessagesService {
       },
       attributes: ["receiverId", "senderId"],
     });
+
+    return rows.map((r) =>
+      r && (r as unknown as { dataValues?: PeerPair }).dataValues
+        ? (r as unknown as { dataValues: PeerPair }).dataValues
+        : (r as unknown as PeerPair),
+    ) as PeerPair[];
   }
 
-  async findMessages(senderId: number, receiverId: number): Promise<Array<any>> {
+  async findMessages(senderId: number, receiverId: number): Promise<MessageResponse[]> {
     const queryResult =
       ((
         await this.messageRepository.findAll<Message>({
@@ -90,7 +111,7 @@ export class MessagesService {
     });
   }
 
-  async findLastMessages(userId: number): Promise<Array<any>> {
+  async findLastMessages(userId: number): Promise<LastMessageResponse[]> {
     const queryResult =
       ((
         await this.messageRepository

@@ -9,7 +9,7 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
     super({ usernameField: "name" });
   }
 
-  async validate(name: string, pwd: string): Promise<any> {
+  async validate(name: string, pwd: string): Promise<Record<string, unknown>> {
     const user = await this.authService.validateUser(name, pwd);
 
     if (!user) {
@@ -20,7 +20,8 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
       throw new ForbiddenException("User isnt validated");
     }
 
-    const { verification_code, ...result } = user;
-    return result;
+    const result = { ...(user as Record<string, unknown>) } as Record<string, unknown>;
+    delete result.verification_code;
+    return result as Record<string, unknown>;
   }
 }

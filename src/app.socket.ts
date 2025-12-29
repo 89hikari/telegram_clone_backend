@@ -50,8 +50,7 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
     const peersIds = [
       ...new Set(
         peersIdsQuery
-          .map(({ dataValues }) => dataValues)
-          ?.reduce((acc, curr) => [...acc, curr.receiverId, curr.senderId], [])
+          .reduce((acc: number[], curr) => [...acc, curr.receiverId, curr.senderId], [])
           .filter((el: number) => el != curUserID),
       ),
     ];

@@ -6,6 +6,7 @@ export class UserDto {
   readonly is_validated?: boolean;
   readonly verification_code?: string;
   readonly lastSeenAt?: Date;
+  readonly avatar?: Buffer | null;
 }
 
-export type UserInsensitiveDTO = Pick<UserDto, "name" | "email" | "gender">;
+export type UserInsensitiveDTO = Omit<UserDto, "password" | "verification_code">;

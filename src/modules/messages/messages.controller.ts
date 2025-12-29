@@ -1,26 +1,25 @@
-import { Body, Controller, Get, Param, Post, Request, UseGuards } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
-import { MessageDto } from './message.dto';
-import { Message as MessageEntity } from './message.entity';
-import { MessagesService } from './messages.service';
+import { Body, Controller, Get, Param, Post, Request, UseGuards } from "@nestjs/common";
+import { AuthGuard } from "@nestjs/passport";
+import { MessageDto } from "./message.dto";
+import { LastMessageResponse, MessageResponse, MessagesService } from "./messages.service";
 
-@Controller('messages')
+@Controller("messages")
 export class MessagesController {
   constructor(private readonly messagesService: MessagesService) {}
 
-  @UseGuards(AuthGuard('jwt'))
-  @Get(':id')
-  async get(@Param('id') id: number, @Request() req): Promise<MessageEntity[]> {
+  @UseGuards(AuthGuard("jwt"))
+  @Get(":id")
+  async get(@Param("id") id: number, @Request() req): Promise<MessageResponse[]> {
     return await this.messagesService.findMessages(req.user.id, id);
   }
 
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard("jwt"))
   @Get()
-  async getLastMessages(@Request() req): Promise<MessageEntity[]> {
+  async getLastMessages(@Request() req): Promise<LastMessageResponse[]> {
     return await this.messagesService.findLastMessages(req.user.id);
   }
 
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard("jwt"))
   @Post()
   async create(@Body() message: MessageDto, @Request() req): Promise<MessageDto> {
     return await this.messagesService.create(message, req.user.id);

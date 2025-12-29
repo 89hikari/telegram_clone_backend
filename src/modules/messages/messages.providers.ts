@@ -1,8 +1,8 @@
-import { Message } from './message.entity';
+import { Message } from "./message.entity";
 
 export const messagesProvider = [
   {
-    provide: 'MESSAGE_REPOSITORY',
+    provide: "MESSAGE_REPOSITORY",
     useValue: Message,
   },
 ];
