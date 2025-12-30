@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { Op } from "sequelize";
 import { Server, Socket } from "socket.io";
 import { v4 as uuidv4 } from "uuid";
@@ -119,6 +119,35 @@ export class MessagesService {
       ...message,
       senderId,
     });
+  }
+
+  /**
+   * Updates a message only if the requester is the original sender
+   * @param messageId - ID of the message to update
+   * @param senderId - ID of the user attempting the update
+   * @param newContent - New message text
+   * @returns Updated message mapped to response format
+   */
+  async updateMessage(messageId: number, senderId: number, newContent: string): Promise<MessageResponse> {
+    const existing = await this.messagesRepository.findOne({ where: { id: messageId, senderId } });
+
+    if (!existing) {
+      throw new NotFoundException("Message not found or not owned by user");
+    }
+
+    existing.message = newContent;
+    await existing.save();
+
+    const createdAt = existing.getDataValue("createdAt") as string | Date;
+
+    return {
+      id: existing.id,
+      message: existing.message,
+      senderId: existing.senderId,
+      receiverId: existing.receiverId,
+      date: typeof createdAt === "string" ? createdAt : createdAt.toISOString(),
+      isMe: true,
+    };
   }
 
   /**

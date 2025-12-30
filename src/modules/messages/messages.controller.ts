@@ -1,7 +1,8 @@
-import { Body, Controller, Get, Param, Post, Request, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Param, Patch, Post, Request, UseGuards } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
 import { LastMessageResponseDto } from "./dto/last-message-response.dto";
 import { MessageResponseDto } from "./dto/message-response.dto";
+import { UpdateMessageDto } from "./dto/update-message.dto";
 import { MessageDto } from "./message.dto";
 import { MessagesService } from "./messages.service";
 
@@ -34,5 +35,14 @@ export class MessagesController {
   @Post()
   async create(@Body() message: MessageDto, @Request() req): Promise<MessageDto> {
     return await this.messagesService.create(message, req.user.id);
+  }
+
+  /**
+   * Update an existing message sent by the current user
+   */
+  @UseGuards(AuthGuard("jwt"))
+  @Patch(":id")
+  async update(@Param("id") id: number, @Body() body: UpdateMessageDto, @Request() req): Promise<MessageResponseDto> {
+    return await this.messagesService.updateMessage(id, req.user.id, body.message);
   }
 }

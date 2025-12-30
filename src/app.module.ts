@@ -36,7 +36,7 @@ import { UsersModule } from "./modules/users/users.module";
     ThrottlerModule.forRoot([
       {
         ttl: 60000, // 60 seconds in ms
-        limit: 5, // max 5 requests per ttl
+        limit: 200, // max 200 requests per ttl
       },
     ]),
     DatabaseModule,
