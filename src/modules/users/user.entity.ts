@@ -1,7 +1,7 @@
 import { Column, DataType, Model, Table } from "sequelize-typescript";
 
-@Table
-export class User extends Model<User> {
+@Table({ tableName: "Users", paranoid: true, underscored: true })
+export class User extends Model<User, Partial<User>> {
   @Column({
     primaryKey: true,
     autoIncrement: true,
@@ -39,20 +39,30 @@ export class User extends Model<User> {
   @Column({
     type: DataType.BOOLEAN,
     allowNull: false,
+    field: "is_validated",
   })
-  is_validated: boolean;
+  isValidated: boolean;
 
   @Column({
     type: DataType.STRING,
     allowNull: true,
+    field: "verification_code",
   })
-  verification_code: string;
+  verificationCode: string;
 
   @Column({
     type: DataType.DATE,
     allowNull: true,
+    field: "last_seen_at",
   })
   lastSeenAt: Date;
+
+  @Column({
+    type: DataType.DATE,
+    allowNull: true,
+    field: "deleted_at",
+  })
+  deletedAt?: Date;
 
   @Column({ type: "bytea", allowNull: true })
   avatar: Buffer | null;

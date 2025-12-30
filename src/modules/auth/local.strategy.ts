@@ -16,12 +16,14 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException("Invalid user credentials");
     }
 
-    if (!user.is_validated) {
+    console.log(user);
+
+    if (!user.isValidated) {
       throw new ForbiddenException("User isnt validated");
     }
 
     const result = { ...(user as Record<string, unknown>) } as Record<string, unknown>;
-    delete result.verification_code;
+    delete result.verificationCode;
     return result as Record<string, unknown>;
   }
 }
