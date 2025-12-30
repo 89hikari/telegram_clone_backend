@@ -50,6 +50,23 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
   }
 
   /**
+   * Handles message edit requests and notifies both peers
+   */
+  @SubscribeMessage("editMessage")
+  async handleEditMessage(client: Socket, payload: { id: number; message: string }): Promise<void> {
+    try {
+      await this.messagesService.handleEditMessage(this.server, client, payload);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to edit message";
+      this.logger.error(`Error in handleEditMessage: ${errorMessage}`, error instanceof Error ? error.stack : "");
+      client.emit("messageError", {
+        error: errorMessage,
+        messageId: payload?.id,
+      });
+    }
+  }
+
+  /**
    * Retrieves peers with active conversations
    * @param curUserID - Current user ID
    * @returns Array of connected peers

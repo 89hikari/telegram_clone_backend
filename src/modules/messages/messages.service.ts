@@ -10,6 +10,11 @@ import { MessageDto } from "./message.dto";
 import { Message } from "./message.entity";
 import { MessagesRepository } from "./messages.repository";
 
+export type EditMessagePayload = {
+  id: number;
+  message: string;
+};
+
 export type SenderOrReceiverPerson = {
   id: number;
   name: string;
@@ -106,6 +111,37 @@ export class MessagesService {
     client.emit("newMessage", newMessage);
     newMessage.self = false;
     peer?.emit("newMessage", newMessage);
+  }
+
+  /**
+   * Handles editing a previously sent message via websocket and emits to both peers
+   */
+  async handleEditMessage(server: Server, client: Socket, payload: EditMessagePayload): Promise<void> {
+    if (!client.data?.userId) {
+      throw new Error("User not initialized. Call initUser first.");
+    }
+
+    if (!payload?.id) {
+      throw new Error("Message ID is required");
+    }
+
+    if (!payload?.message) {
+      throw new Error("Message content is required");
+    }
+
+    const senderId = client.data.userId as number;
+
+    const updated = await this.updateMessage(payload.id, senderId, payload.message);
+
+    const receiverSocket = Array.from(server.sockets.sockets.values()).find(
+      (el) => el.data?.userId === updated.receiverId,
+    );
+
+    const senderPayload = { ...updated, isMe: true };
+    const receiverPayload = { ...updated, isMe: false };
+
+    client.emit("messageEdited", senderPayload);
+    receiverSocket?.emit("messageEdited", receiverPayload);
   }
 
   /**
