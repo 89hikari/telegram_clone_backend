@@ -1,4 +1,7 @@
 import { Sequelize } from "sequelize-typescript";
+import { GroupMember } from "src/modules/groups/group-member.entity";
+import { GroupMessage } from "src/modules/groups/group-message.entity";
+import { Group } from "src/modules/groups/group.entity";
 import { Message } from "src/modules/messages/message.entity";
 import { User } from "src/modules/users/user.entity";
 import { databaseConfig } from "./db.config";
@@ -23,7 +26,7 @@ export const databaseProviders = [
           config = databaseConfig.development;
       }
       const sequelize = new Sequelize(config);
-      sequelize.addModels([User, Message]);
+      sequelize.addModels([User, Message, Group, GroupMember, GroupMessage]);
       await sequelize.sync();
       return sequelize;
     },

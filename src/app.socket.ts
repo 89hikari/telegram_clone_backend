@@ -10,6 +10,8 @@ import {
   WsException,
 } from "@nestjs/websockets";
 import { Server, Socket } from "socket.io";
+import { GroupMessageDto } from "./modules/groups/dto/group-message.dto";
+import { GroupsService } from "./modules/groups/groups.service";
 import { MessageDto } from "./modules/messages/message.dto";
 import { MessagesService } from "./modules/messages/messages.service";
 import { UsersService } from "./modules/users/users.service";
@@ -23,6 +25,7 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
   private readonly logger = new Logger(AppGateway.name);
 
   constructor(
+    private readonly groupsService: GroupsService,
     private readonly messagesService: MessagesService,
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
@@ -45,6 +48,44 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
       client.emit("messageError", {
         error: errorMessage,
         receiverId: payload?.receiverId,
+      });
+    }
+  }
+
+  /**
+   * Handles incoming group messages and broadcasts to group members
+   */
+  @SubscribeMessage("sendGroupMessage")
+  async handleSendGroupMessage(client: Socket, payload: GroupMessageDto): Promise<void> {
+    try {
+      await this.groupsService.handleOutgoingGroupMessage(this.server, client, payload);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to send group message";
+      this.logger.error(`Error in handleSendGroupMessage: ${errorMessage}`, error instanceof Error ? error.stack : "");
+      client.emit("messageError", {
+        error: errorMessage,
+        groupId: payload?.groupId,
+      });
+    }
+  }
+
+  /**
+   * Handles group message edits and broadcasts to members
+   */
+  @SubscribeMessage("editGroupMessage")
+  async handleEditGroupMessage(
+    client: Socket,
+    payload: { id?: number; message?: string; groupId?: number },
+  ): Promise<void> {
+    try {
+      await this.groupsService.handleEditGroupMessage(this.server, client, payload);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to edit group message";
+      this.logger.error(`Error in handleEditGroupMessage: ${errorMessage}`, error instanceof Error ? error.stack : "");
+      client.emit("messageError", {
+        error: errorMessage,
+        groupId: payload?.groupId,
+        messageId: payload?.id,
       });
     }
   }
@@ -127,6 +168,7 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
       });
 
       client.emit("connectedPeers", connectedPeers);
+      await this.groupsService.broadcastGroupPresence(this.server, authenticatedUserId, "online");
       this.logger.log(`User ${authenticatedUserId} initialized with connection ${client.id}`);
     } catch (error) {
       const errorMessage = error instanceof WsException ? error.getError() : "Failed to initialize user";
@@ -170,6 +212,7 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
         });
 
         await this.usersService.setLastSeen(userId);
+        await this.groupsService.broadcastGroupPresence(this.server, userId, "offline");
       }
 
       client.data = {};
