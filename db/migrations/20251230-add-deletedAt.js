@@ -11,10 +11,16 @@ module.exports = {
       type: Sequelize.DATE,
       allowNull: true,
     });
+
+    await queryInterface.addColumn("Users", "lastSeenAt", {
+      type: Sequelize.DATE,
+      allowNull: true,
+    });
   },
 
   async down(queryInterface) {
     await queryInterface.removeColumn("Messages", "deletedAt");
     await queryInterface.removeColumn("Users", "deletedAt");
+    await queryInterface.removeColumn("Users", "lastSeenAt");
   },
 };

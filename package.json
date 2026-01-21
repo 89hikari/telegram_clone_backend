@@ -40,7 +40,7 @@
     "@nestjs/passport": "^10.0.2",
     "@nestjs/platform-express": "^10.0.0",
     "@nestjs/platform-socket.io": "^10.2.10",
-    "@nestjs/throttler": "^5.1.0",
+    "@nestjs/throttler": "^6.5.0",
     "@nestjs/websockets": "^10.2.10",
     "@react-email/components": "^0.0.11",
     "bcrypt": "^5.1.1",
