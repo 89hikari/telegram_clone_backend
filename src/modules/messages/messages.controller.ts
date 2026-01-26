@@ -15,8 +15,8 @@ export class MessagesController {
    */
   @UseGuards(AuthGuard("jwt"))
   @Get(":id")
-  async get(@Param("id") id: number, @Request() req): Promise<MessageResponseDto[]> {
-    return await this.messagesService.findMessages(req.user.id, id);
+  async get(@Param("id") id: number, @Param("id") limit: number, @Request() req): Promise<MessageResponseDto[]> {
+    return await this.messagesService.findMessages(req.user.id, id, limit);
   }
 
   /**

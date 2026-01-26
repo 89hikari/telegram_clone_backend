@@ -17,9 +17,11 @@ import { MessagesService } from "./modules/messages/messages.service";
 import { UsersService } from "./modules/users/users.service";
 
 @WebSocketGateway({
+  path: "/vue-chat/socket.io",
   cors: {
-    origin: "*",
+    origin: "https://projects.vladislav0151.ru/",
   },
+  transports: ["websocket"],
 })
 export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   private readonly logger = new Logger(AppGateway.name);

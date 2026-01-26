@@ -50,13 +50,13 @@ export type LastMessageResponse = LastMessageResponseDto;
 export interface ILastMessageRow {
   id: number;
   message: string;
-  sender_id: number;
-  sender_name: string;
-  sender_avatar?: string;
-  receiver_id: number;
-  receiver_name: string;
-  receiver_avatar?: string;
-  created_at: string | Date;
+  senderId: number;
+  senderName: string;
+  senderAvatar?: string;
+  receiverId: number;
+  receiverName: string;
+  receiverAvatar?: string;
+  createdAt: string | Date;
 }
 
 @Injectable()
@@ -216,7 +216,7 @@ export class MessagesService {
    * @param receiverId - Second user ID
    * @returns Array of messages ordered by date
    */
-  async findMessages(senderId: number, receiverId: number): Promise<MessageResponse[]> {
+  async findMessages(senderId: number, receiverId: number, limit: number = 30): Promise<MessageResponse[]> {
     const queryResult =
       ((await this.messagesRepository.findAll({
         where: {
@@ -232,22 +232,24 @@ export class MessagesService {
           ],
         },
         attributes: ["id", "message", "senderId", "receiverId", "createdAt"],
-        order: [["createdAt", "asc"]],
-        limit: 30,
+        order: [["createdAt", "desc"]],
+        limit: limit,
         raw: true,
       })) as unknown as IMessages[]) || [];
 
-    return queryResult.map((el) => {
-      const isMe = senderId === el.senderId;
-      return {
-        id: el.id,
-        message: el.message,
-        senderId: el.senderId,
-        receiverId: el.receiverId,
-        date: typeof el.createdAt === "string" ? el.createdAt : el.createdAt.toISOString(),
-        isMe: isMe,
-      };
-    });
+    return queryResult
+      .map((el) => {
+        const isMe = senderId === el.senderId;
+        return {
+          id: el.id,
+          message: el.message,
+          senderId: el.senderId,
+          receiverId: el.receiverId,
+          date: typeof el.createdAt === "string" ? el.createdAt : el.createdAt.toISOString(),
+          isMe: isMe,
+        };
+      })
+      .reverse();
   }
 
   /**
@@ -265,68 +267,46 @@ export class MessagesService {
       : // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (this.messagesRepository as any).repository?.sequelize;
 
-    if (!sequelize) {
-      // fallback to previous implementation if we can't access sequelize instance
-      const fallback = await this.getPeersWithConversations(userId);
-      return (
-        (await Promise.all(
-          fallback.map(async (pair) => {
-            const last = await this.messagesRepository.findAll({
-              where: { senderId: pair.senderId, receiverId: pair.receiverId },
-              order: [["createdAt", "desc"]],
-              limit: 1,
-              include: [
-                { model: User, as: "sender", attributes: ["id", "name", "avatar"] },
-                { model: User, as: "receiver", attributes: ["id", "name", "avatar"] },
-              ],
-            });
-            return last[0] ? (last[0].get({ plain: true }) as unknown as ILastMessages) : null;
-          }),
-        )) || []
-      )
-        .filter(Boolean)
-        .map((el) => {
-          const isMe = userId === el.receiver.id;
-          return {
-            id: el.id,
-            date: typeof el.createdAt === "string" ? el.createdAt : el.createdAt.toISOString(),
-            message: el.message,
-            personId: isMe ? el.sender.id : el.receiver.id,
-            personName: isMe ? el.sender.name : el.receiver.name,
-            hasAvatar: isMe ? !!el.sender.avatar : !!el.receiver.avatar,
-          };
-        });
-    }
-
     const sql = `
       SELECT m.*,
-             s.id as sender_id, s.name as sender_name, s.avatar as sender_avatar,
-             r.id as receiver_id, r.name as receiver_name, r.avatar as receiver_avatar
-      FROM "Messages" m
-      JOIN (
-        SELECT GREATEST("sender_id", "receiver_id") AS u1,
-               LEAST("sender_id", "receiver_id") AS u2,
-               MAX(id) AS id
-        FROM "Messages"
-        WHERE "sender_id" = :userId OR "receiver_id" = :userId
-        GROUP BY GREATEST("sender_id", "receiver_id"), LEAST("sender_id", "receiver_id")
-      ) sub ON sub.id = m.id
-      JOIN "Users" s ON s.id = m."sender_id"
-      JOIN "Users" r ON r.id = m."receiver_id"
-      ORDER BY m."created_at" DESC
+          s.id as "senderId",
+          s.name as "senderName",
+          s.avatar as "senderAvatar",
+          r.id as "receiverId",
+          r.name as "receiverName",
+          r.avatar as "receiverAvatar"
+      FROM
+          "Messages" m
+          JOIN (
+              SELECT
+                  GREATEST("senderId", "receiverId") AS u1,
+                  LEAST("senderId", "receiverId") AS u2,
+                  MAX(id) AS id
+              FROM
+                  "Messages"
+              WHERE
+                  "senderId" = :userId
+                  OR "receiverId" = :userId
+              GROUP BY
+                GREATEST("senderId", "receiverId"), LEAST("senderId", "receiverId")
+          ) sub ON sub.id = m.id
+          JOIN "Users" s ON s.id = m."senderId"
+          JOIN "Users" r ON r.id = m."receiverId"
+      ORDER BY
+        m."createdAt" DESC
     `;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const rows = await sequelize.query(sql, { replacements: { userId }, type: (sequelize as any).QueryTypes.SELECT });
     const results = (rows as ILastMessageRow[]).map((row) => {
-      const isMe = userId === row.receiver_id;
+      const isMe = userId === row.receiverId;
       return {
         id: row.id,
-        date: typeof row.created_at === "string" ? row.created_at : (row.created_at as Date).toISOString(),
+        date: typeof row.createdAt === "string" ? row.createdAt : (row.createdAt as Date).toISOString(),
         message: row.message,
-        personId: isMe ? row.sender_id : row.receiver_id,
-        personName: isMe ? row.sender_name : row.receiver_name,
-        hasAvatar: isMe ? !!row.sender_avatar : !!row.receiver_avatar,
+        personId: isMe ? row.senderId : row.receiverId,
+        personName: isMe ? row.senderName : row.receiverName,
+        hasAvatar: isMe ? !!row.senderAvatar : !!row.receiverAvatar,
       } as LastMessageResponse;
     });
 

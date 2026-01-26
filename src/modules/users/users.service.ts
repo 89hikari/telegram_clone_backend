@@ -93,7 +93,7 @@ export class UsersService {
     }
 
     const user = await this.usersRepository.findOne({
-      where: { [Op.or]: [{ name: emailOrName }, { email: emailOrName }] },
+      where: { [Op.or]: [{ name: { [Op.iLike]: lookupKey } }, { email: { [Op.iLike]: lookupKey } }] },
     });
 
     if (user) {

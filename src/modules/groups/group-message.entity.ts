@@ -2,7 +2,7 @@ import { AutoIncrement, BelongsTo, Column, DataType, ForeignKey, Model, PrimaryK
 import { User } from "../users/user.entity";
 import { Group } from "./group.entity";
 
-@Table({ tableName: "GroupMessages", paranoid: true, underscored: true })
+@Table({ tableName: "GroupMessages", paranoid: true })
 export class GroupMessage extends Model<GroupMessage, Partial<GroupMessage>> {
   @PrimaryKey
   @AutoIncrement
@@ -16,7 +16,6 @@ export class GroupMessage extends Model<GroupMessage, Partial<GroupMessage>> {
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
-    field: "group_id",
   })
   groupId: number;
 
@@ -27,7 +26,6 @@ export class GroupMessage extends Model<GroupMessage, Partial<GroupMessage>> {
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
-    field: "sender_id",
   })
   senderId: number;
 
@@ -43,7 +41,6 @@ export class GroupMessage extends Model<GroupMessage, Partial<GroupMessage>> {
   @Column({
     type: DataType.DATE,
     allowNull: true,
-    field: "deleted_at",
   })
   deletedAt?: Date;
 }

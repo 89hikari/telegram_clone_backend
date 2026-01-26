@@ -1,7 +1,7 @@
 import { AutoIncrement, BelongsTo, Column, DataType, ForeignKey, Model, PrimaryKey, Table } from "sequelize-typescript";
 import { User } from "../users/user.entity";
 
-@Table({ tableName: "Messages", paranoid: true, underscored: true })
+@Table({ tableName: "Messages", paranoid: true })
 export class Message extends Model<Message, Partial<Message>> {
   @PrimaryKey
   @AutoIncrement
@@ -21,7 +21,6 @@ export class Message extends Model<Message, Partial<Message>> {
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
-    field: "sender_id",
   })
   senderId: number;
 
@@ -32,7 +31,6 @@ export class Message extends Model<Message, Partial<Message>> {
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
-    field: "receiver_id",
   })
   receiverId: number;
 
@@ -42,7 +40,6 @@ export class Message extends Model<Message, Partial<Message>> {
   @Column({
     type: DataType.DATE,
     allowNull: true,
-    field: "deleted_at",
   })
   deletedAt?: Date;
 }

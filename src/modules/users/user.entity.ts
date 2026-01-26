@@ -1,6 +1,6 @@
 import { Column, DataType, Model, Table } from "sequelize-typescript";
 
-@Table({ tableName: "Users", paranoid: true, underscored: true })
+@Table({ tableName: "Users", paranoid: true })
 export class User extends Model<User, Partial<User>> {
   @Column({
     primaryKey: true,
@@ -39,28 +39,24 @@ export class User extends Model<User, Partial<User>> {
   @Column({
     type: DataType.BOOLEAN,
     allowNull: false,
-    field: "is_validated",
   })
   isValidated: boolean;
 
   @Column({
     type: DataType.STRING,
     allowNull: true,
-    field: "verification_code",
   })
   verificationCode: string;
 
   @Column({
     type: DataType.DATE,
     allowNull: true,
-    field: "last_seen_at",
   })
   lastSeenAt: Date;
 
   @Column({
     type: DataType.DATE,
     allowNull: true,
-    field: "deleted_at",
   })
   deletedAt?: Date;
 
